@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" hash="929548597">
+    <data-source source="LOCAL" name="SQLite -" uuid="52699edb-c14b-4805-9da7-07fe0560798e">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/hacknews.db</jdbc-url>
+      <libraries />
+    </data-source>
+  </component>
+</project>
+
