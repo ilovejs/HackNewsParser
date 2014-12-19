@@ -33,9 +33,9 @@ Base.metadata.create_all(engine)
 
 
 
-def ParsePageToArray():
+def RequestPageToArray (url):
     # Test url: http://localhost/HN.htm
-    p = requests.get("http://news.ycombinator.com").content
+    p = requests.get(url).content
     dom = html.fromstring(p)
 
     # Test rules in Chrome, unfortunately, "tbody" is rendered in Chrome and Firefox as extra. So, should get rid of it.
@@ -87,31 +87,87 @@ def ParsePageToArray():
     yield NewsContentArray
 
 
-# TODO: throw exception.
-def Request_WriteToDb():
+
+def SaveToDb():
     """ Request and save to database
     """
     # db write
     s = session()
-    
-    # 30 is the page count, get rid of NewsIdArray[30] because it's edge case.
-    for i in range(0, 30):
-        
-        NewsIdArray, NewsContentArray = ParsePageToArray()
-        
-        hid = NewsIdArray[i]
+    try:
+        # Get page 1 - 28
+        for pageNumber in range(1, 29):
+            pageUrl = "https://news.ycombinator.com/news?p=" + str(pageNumber)
+            print "Visit Page: " + str(pageNumber) + "======================>"
+            # 30 is the page count, get rid of NewsIdArray[30] because it's edge case.
+            NewsIdArray, NewsContentArray = RequestPageToArray(pageUrl)
+            # Each page has 30 threads
+            for threadNumber in range(0, 30):
 
-        title, url = NewsContentArray[i]
-        #print hid, title, url
-     
-        # Check uniqueness by Hid
-        checkOld = s.query(Record).filter(Record.hid == hid).count()
-        # Has added before ?
-        if (checkOld == 0):
-            s.add(Record(hid=hid, title=title, url=url))
-     
-    s.commit()
+                hid = NewsIdArray[threadNumber]
+
+                title, url = NewsContentArray[threadNumber]
+                #print hid, title, url
+
+                # Check uniqueness by Hid
+                checkOld = s.query(Record).filter(Record.hid == hid).count()
+                # Has added before ?
+                if checkOld == 0:
+                    s.add(Record(hid=hid, title=title, url=url))
+                    print "Add the " + str(threadNumber)+ "th thread on page:" + str(hid) + " | " + title + " | " + url
+
+    except RuntimeError as rr:
+        print "------------Fail at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
+        print rr
+    except TypeError as tr:
+        print "------------Fail at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
+        print tr
+    except NameError as n:
+        print "------------Fail at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
+        print n
+    finally:
+        s.commit()
+        print "------------Finish at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
 
 
 
+
+def TestPartial():
+    """ Request and save to database
+    """
+    # db write
+    s = session()
+    try:
+        # Get page 1 - 27
+        for pageNumber in range(28,30):
+            pageUrl = "https://news.ycombinator.com/news?p=" + str(pageNumber)
+            print "Test on page: " + str(pageNumber)
+            # 30 is the page count, get rid of NewsIdArray[30] because it's edge case.
+            NewsIdArray, NewsContentArray = RequestPageToArray(pageUrl)
+
+            for threadNumber in range(0, 30):
+                print "Trying thread: " + str(threadNumber)
+                hid = NewsIdArray[threadNumber]
+
+                title, url = NewsContentArray[threadNumber]
+                #print hid, title, url
+
+                # Check uniqueness by Hid
+                checkOld = s.query(Record).filter(Record.hid == hid).count()
+                # Has added before ?
+                if checkOld == 0:
+                    s.add(Record(hid=hid, title=title, url=url))
+                    print "Add Record: " + str(id) + " | " + title + " | " + url
+
+    except RuntimeError as rr:
+        print "------------Fail at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
+        print rr
+    except TypeError as tr:
+        print "------------Fail at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
+        print tr
+    except NameError as n:
+        print "------------Fail at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
+        print n
+    finally:
+        s.commit()
+        print "------------Finish at Page: " + str(pageNumber) + ", the " + str(threadNumber) + "th Thread."
 
